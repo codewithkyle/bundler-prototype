@@ -1,0 +1,18 @@
+  
+# NPM
+# -------
+node_modules
+
+
+# Other
+# -------
+.sass-cache
+.DS_Store
+.stylelintcache
+.editorconfig
+
+# TypeScript Transpiled Outputs
+# -------
+_compiled
+_bundles
+_modules

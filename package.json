@@ -1,0 +1,16 @@
+{
+    "author": "Kyle Andrews",
+    "license": "MIT",
+    "dependencies": {
+        "uuid": "^3.3.2"
+    },
+    "devDependencies": {
+        "glob": "^7.1.4",
+        "http-server": "^0.11.1",
+        "rimraf": "^2.6.3",
+        "typescript": "^3.5.3"
+    },
+    "scripts": {
+        "dev": "tsc"
+    }
+}
