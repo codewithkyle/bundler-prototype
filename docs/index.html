@@ -66,11 +66,12 @@
         {
             --blue: hsl(219, 79%, 66%);
             --grey: hsl(0, 5%, 96%);
-            --off-black: #181818;
+            --off-black: #131820;
+            --cool-white: #f9faff;
         }
         body
         {
-            background-color: #fff;
+            background-color: var(--cool-white);
         }
         main
         {
@@ -79,10 +80,60 @@
             align-items: center;
         }
     </style>
+
+    <!-- Generator Component -->
+    <style>
+        generator-component{
+            width: 640px;
+            height: 128px;
+            border-radius: 1rem;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem;
+            box-shadow: 0 0 64px rgba(34, 45, 61, 0.05);
+        }
+
+        generator-component uid-display{
+            opacity: 0.87;
+            user-select: all;
+            font-size: 1.25rem;
+            letter-spacing: 2px;
+            color: var(--off-black);
+        }
+
+        generator-component button{
+            height: 36px;
+            line-height: 36px;
+            padding: 0 1rem;
+            border-radius: 2px;
+            background-color: var(--blue);
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        generator-component button:hover{
+            background-color: hsl(219, 92%, 72%);
+        }
+
+        generator-component button:active{
+            background-color: hsl(219, 79%, 63%);
+        }
+    </style>
+
+    <script src="assets/scripts/generator-component.js" defer></script>
 </head>
 <body>
     <main role="main">
-        Hello world!
+        <generator-component>
+            <uid-display>xxxx-xxxx-xxxx-xxxx-xxxx</uid-display>
+            <button>Generate</button>
+        </generator-component>
     </main>
 </body>
 </html>

@@ -11,6 +11,7 @@
         "typescript": "^3.5.3"
     },
     "scripts": {
-        "dev": "tsc"
+        "compile": "tsc",
+        "preview": "http-server ./docs/"
     }
 }
