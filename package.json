@@ -11,7 +11,7 @@
         "typescript": "^3.5.3"
     },
     "scripts": {
-        "compile": "tsc",
+        "compile": "tsc && node ./bundler.js",
         "preview": "http-server ./docs/"
     }
 }
