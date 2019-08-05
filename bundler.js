@@ -31,8 +31,8 @@ class Bundler
         try
         {
             const files = await this.findFiles();
-            await this.getImportStatements(files)// Parse files for import statements
-            // Remove duplicate import statements
+            let imports = await this.getImportStatements(files);
+            imports = await this.purgeDuplicateImports(imports);
             // Get node modules
             // Get local scripts
             // Bundle node modules
@@ -69,6 +69,9 @@ class Bundler
                 reject('Can\'t find imports statements from non-existent files');
             }
 
+            const imports = [];
+            let filesParsed = 0;
+
             for (let i = 0; i < files.length; i++)
             {
                 fs.readFile(files[i], (error, buffer)=>{
@@ -95,13 +98,52 @@ class Bundler
                             fileName = fileName.replace(/[\'\"]/g, '');
                             fileName = fileName.trim();
 
-                            console.log(importName, fileName);
+                            const newImport = { name: importName, file: fileName };
+                            imports.push(newImport);
                         }
+                    }
+
+                    filesParsed++;
+
+                    if (filesParsed === files.length)
+                    {
+                        resolve(imports);
                     }
                 });
             }
+        });
+    }
 
-            resolve();
+    purgeDuplicateImports(imports)
+    {
+        console.log('Removing duplicate imports');
+        return new Promise((resolve, reject)=>{
+            if(!imports)
+            {
+                reject('Can\'t purge imports if no import objects are provided');
+            }
+
+            const uniqueImports = [];
+
+            for (let i = 0; i < imports.length; i++)
+            {
+                let isUnique = true;
+                for (let k = 0; k < uniqueImports.length; k++)
+                {
+                    if (uniqueImports[k].name === imports[i].name)
+                    {
+                        isUnique = false;
+                        break;
+                    }
+                }
+
+                if (isUnique)
+                {
+                    uniqueImports.push(imports[i]);
+                }
+            }
+
+            resolve(uniqueImports);
         });
     }
 }
