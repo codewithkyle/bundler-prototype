@@ -27,11 +27,11 @@ class Bundler
 
     async run()
     {
+        console.log('Running the bundler');
         try
         {
-            console.log('Running the bundler');
-            const files = this.findFiles();
-            this.getImportStatements(files)// Parse files for import statements
+            const files = await this.findFiles();
+            await this.getImportStatements(files)// Parse files for import statements
             // Remove duplicate import statements
             // Get node modules
             // Get local scripts
@@ -47,6 +47,7 @@ class Bundler
 
     findFiles()
     {
+        console.log('Finding compiled JavaScript files');
         return new Promise((resolve, reject)=>{
             glob('./_compiled/**/*.js', (error, files)=>{
                 if(error)
@@ -61,6 +62,7 @@ class Bundler
 
     getImportStatements(files)
     {
+        console.log('Finding import statements');
         return new Promise((resolve, reject)=>{
             if(!files)
             {
@@ -76,13 +78,30 @@ class Bundler
                     }
 
                     const data = buffer.toString();
+                    const importStatements = data.match(/(import).*(from).*\;/g);
 
-                    if(data.match(/(import).*(from)/g))
+                    if(importStatements)
                     {
-                        
+                        for (let k = 0; k < importStatements.length; k++)
+                        {
+                            let importName = importStatements[i].replace(/import/, '');
+                            importName = importName.trim();
+                            importName = importName.replace(/((\{)|(\*.*?as))/, '');
+                            importName = importName.trim();
+                            importName = importName.replace(/(\}|from).*?\;/, '');
+                            importName = importName.trim();
+
+                            let fileName = importStatements[i].match(/([\'\"].*?[\'\"])/)[0];
+                            fileName = fileName.replace(/[\'\"]/g, '');
+                            fileName = fileName.trim();
+
+                            console.log(importName, fileName);
+                        }
                     }
                 });
             }
+
+            resolve();
         });
     }
 }
