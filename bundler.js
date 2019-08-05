@@ -1,6 +1,7 @@
 const glob = require('glob');
 const rimraf = require('rimraf');
 const fs = require('fs');
+const npmPackage = require('./package.json');
 
 class Bundler
 {
@@ -33,10 +34,8 @@ class Bundler
             const files = await this.findFiles();
             let imports = await this.getImportStatements(files);
             imports = await this.purgeDuplicateImports(imports);
-            // Get node modules
-            // Get local scripts
-            // Bundle node modules
-            // Bundle local scripts
+            imports = await this.getImportTypes(imports);
+            // Bundle imports
             // Update import statements
         }
         catch (error)
@@ -144,6 +143,28 @@ class Bundler
             }
 
             resolve(uniqueImports);
+        });
+    }
+
+    getImportTypes(imports)
+    {
+        console.log('Setting import types');
+        return new Promise((resolve)=>{
+            for (let i = 0; i < imports.length; i++)
+            {
+                imports[i].type = 'global';
+
+                for (const key of Object.keys(npmPackage.dependencies))
+                {
+                    if (imports[i].name === key || imports[i].file === key)
+                    {
+                        imports[i].type = 'npm';
+                        break;
+                    }
+                }
+            }
+
+            resolve(imports);
         });
     }
 }
