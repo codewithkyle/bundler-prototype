@@ -35,8 +35,10 @@ class Bundler
             let imports = await this.getImportStatements(files);
             imports = await this.purgeDuplicateImports(imports);
             imports = await this.getImportTypes(imports);
-            // Bundle imports
+            await this.makeBundleDirectory();
+            await this.bundleImports(imports);
             // Update import statements
+            await this.removeBundleDirectory();
         }
         catch (error)
         {
@@ -165,6 +167,100 @@ class Bundler
             }
 
             resolve(imports);
+        });
+    }
+
+    makeBundleDirectory()
+    {
+        console.log('Creating temporary bundle directory');
+        return new Promise((resolve, reject)=>{
+            fs.mkdir('./_bundled', (error)=>{
+                if (error)
+                {
+                    reject(error);
+                }
+
+                resolve();
+            });
+        });
+    }
+
+    bundleImports(imports)
+    {
+        console.log('Bundling imports');
+        return new Promise((resolve, reject)=>{
+            if(!imports)
+            {
+                reject('Can\'t bundle non-existing imports');
+            }
+
+            let completed = 0;
+            for (let i = 0; i < imports.length; i++)
+            {
+                switch (imports[i].type)
+                {
+                    case 'npm':
+                        this.bundleNPM(imports[i])
+                        .then(()=>{
+                            completed++;
+
+                            if (completed === imports.length)
+                            {
+                                resolve();
+                            }
+                        });
+                        break;
+                    case 'global':
+                        this.bundleGlobal(imports[i])
+                        .then(()=>{
+                            completed++;
+
+                            if (completed === imports.length)
+                            {
+                                resolve();
+                            }
+                        });
+                        break;
+                    default:
+                        console.log('Unknown import type:', imports[i].type);
+                        break;
+                }
+            }
+        });
+    }
+
+    async bundleNPM(importObj)
+    {
+        return new Promise((resolve, reject)=>{
+            fs.readFile(`node_modules/${ importObj.file }.js`, (error, buffer)=>{
+                if (error)
+                {
+                    reject(error);
+                }
+    
+                const data = buffer.toString();
+                
+                
+
+                resolve();
+            });
+        });
+    }
+
+    async bundleGlobal(importObj)
+    {
+        return new Promise((resolve)=>{
+            resolve();
+        });
+    }
+
+    removeBundleDirectory()
+    {
+        rimraf('./_bundled', (error)=>{
+            if (error)
+            {
+                reject(error);
+            }
         });
     }
 }
