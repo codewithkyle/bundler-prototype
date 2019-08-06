@@ -232,19 +232,60 @@ class Bundler
     async bundleNPM(importObj)
     {
         return new Promise((resolve, reject)=>{
-            fs.readFile(`node_modules/${ importObj.file }.js`, (error, buffer)=>{
+
+            let npmOrg = null;
+
+            if (importObj.file.match(/\@/))
+            {
+                npmOrg = importObj.file.match(/\@.*?\//)[0];
+                npmOrg = npmOrg.replace(/\//, '');
+                npmOrg = npmOrg.trim();
+            }
+
+            let requiredModules = [];
+            // ode_modules/${ importObj.file }.js
+            const newModules = this.getRequiredNodeModules(data);
+            requiredModules = [...requiredModules, ...newModules];
+        });
+    }
+
+    readFile(path)
+    {
+        return new Promise((resolve, reject)=>{
+            fs.readFile(path, (error, buffer)=>{
                 if (error)
                 {
                     reject(error);
                 }
     
                 const data = buffer.toString();
-                
-                
-
-                resolve();
+                resolve(data);
             });
         });
+    }
+
+    getRequiredNodeModules(data)
+    {
+        const requiredModules = [];
+        const requiredFiles = data.match(/((var)|(const)|(let)).*(require).*?\;/g);
+
+        if (requiredFiles)
+        {
+            for (let i = 0; i < requiredFiles.length; i++)
+            {
+                let filePath = requiredFiles[i].match(/[\'\"].*?[\'\"]/)[0];
+                filePath = filePath.replace(/[\'\"\.]/g, '');
+                filePath = filePath.trim();
+
+                let moduleVariable = requiredFiles[i].match(/(?=(var)|(let)|(const)).*?(?<=\=)/)[0];
+                moduleVariable = moduleVariable.replace(/((var)|(let)|(const)|(\=)|(\s))/, '');
+
+                const newRequiredModule = { var: moduleVariable, path: filePath };
+                requiredModules.push(newRequiredModule);
+            }
+        }
+
+        return requiredModules;
     }
 
     async bundleGlobal(importObj)
