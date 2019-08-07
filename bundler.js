@@ -240,29 +240,28 @@ class Bundler
 
             if (importObj.file.match(/\@/))
             {
-                npmOrg = importObj.file.match(/\@.*?\//)[0];
-                npmOrg = npmOrg.replace(/\//, '');
-                npmOrg = npmOrg.trim();
+                npmOrg = importObj.file.match(/\@.*?\//)[0].replace(/\//, '').trim();
             }
 
-            let packageFilePath = '';
-            if (npmOrg)
-            {
-                packageFilePath += npmOrg + '/';
-            }
-            packageFilePath += npmName;
-            packageFilePath += '/package.json';
-
+            let packageFilePath = `${ (npmOrg) ? npmOrg + '/' : '' }${ npmName }/package.json`;
             const npmPackage = require(packageFilePath);
-            
-            let initialFilePath = `node_modules/${ importObj.file }.js`;
+            let initialFilePath = '';
+
             if (npmPackage['browser'])
             {
                 initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['browser'][Object.keys(npmPackage['browser'])[0]].match(/(?![\.\/]).*/)[0] }`;
             }
+            else if(npmPackage['main'])
+            {
+                initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['main']}`;
+            }
+            else
+            {
+                initialFilePath = `node_modules/${ importObj.file }.js`;
+            }
 
             let requiredModules = [ initialFilePath ];
-
+            let parsedModules = [];
             let loopCount = 0;
 
             do
@@ -271,6 +270,7 @@ class Bundler
                 console.log(loopCount, requiredModules);
                 const data = await this.readFile(requiredModules[0]);
                 const newModules = await this.getRequiredNodeModules(data);
+                const uniqueModules = await this.verifyUniqueNodeModules(parsedModules, newModules);
 
                 if (newModules)
                 {
@@ -288,6 +288,28 @@ class Bundler
             }
             while (requiredModules.length);
         });
+    }
+
+    verifyUniqueNodeModules(parsedModules, newModules)
+    {
+        const uniqueModules = [];
+        for (let i = 0; i < newModules.length; i++)
+        {
+            let isUnique = true;
+            for (let k = 0; k < parsedModules.length; k++)
+            {
+                if (parsedModules[k].var === newModules[i].var)
+                {
+                    isUnique = false;
+                    break;
+                }
+            }
+
+            if (isUnique)
+            {
+                uniqueModules.push(newModules[i]);
+            }
+        }
     }
 
     getNodeModulePaths(modules, basePath)
@@ -329,13 +351,8 @@ class Bundler
         {
             for (let i = 0; i < requiredFiles.length; i++)
             {
-                let filePath = requiredFiles[i].match(/[\'\"].*?[\'\"]/)[0];
-                filePath = filePath.replace(/[\'\"\.]/g, '');
-                filePath = filePath.trim();
-
-                let moduleVariable = requiredFiles[i].match(/(?=(var)|(let)|(const)).*?(?<=\=)/)[0];
-                moduleVariable = moduleVariable.replace(/((var)|(let)|(const)|(\=)|(\s))/, '');
-
+                let filePath = requiredFiles[i].match(/[\'\"].*?[\'\"]/)[0].replace(/[\'\"\.]/g, '').trim();
+                let moduleVariable = requiredFiles[i].match(/(?=(var)|(let)|(const)).*?(?<=\=)/)[0].replace(/((var)|(let)|(const)|(\=)|(\s))/, '');
                 const newRequiredModule = { var: moduleVariable, path: filePath };
                 requiredModules.push(newRequiredModule);
             }
