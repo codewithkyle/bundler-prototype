@@ -229,24 +229,61 @@ class Bundler
         });
     }
 
-    async bundleNPM(importObj)
+    bundleNPM(importObj)
     {
-        return new Promise((resolve, reject)=>{
+        return new Promise(async (resolve, reject)=>{
 
-            let npmOrg = null;
+            // let npmOrg = null;
+            // let subPaths = importObj.file.replace(/\@.*?\//, '').split('/');
+            // let npmPackage = subPaths[0];
 
-            if (importObj.file.match(/\@/))
+            // if (importObj.file.match(/\@/))
+            // {
+            //     npmOrg = importObj.file.match(/\@.*?\//)[0];
+            //     npmOrg = npmOrg.replace(/\//, '');
+            //     npmOrg = npmOrg.trim();
+            // }
+
+            let requiredModules = [ `node_modules/${ importObj.file }.js` ];
+
+            let loopCount = 0;
+            
+            do
             {
-                npmOrg = importObj.file.match(/\@.*?\//)[0];
-                npmOrg = npmOrg.replace(/\//, '');
-                npmOrg = npmOrg.trim();
-            }
+                loopCount++;
+                console.log(loopCount, requiredModules);
+                const data = await this.readFile(requiredModules[0]);
+                const newModules = await this.getRequiredNodeModules(data);
 
-            let requiredModules = [];
-            // ode_modules/${ importObj.file }.js
-            const newModules = this.getRequiredNodeModules(data);
-            requiredModules = [...requiredModules, ...newModules];
+                if (newModules)
+                {
+
+                    const currentPath = requiredModules[0].match(/.*(?=\/)/)[0];
+                    const newModulePaths = await this.getNodeModulePaths(newModules, currentPath);
+
+                    if (newModulePaths)
+                    {
+                        requiredModules = [...requiredModules, ...newModulePaths];
+                    }
+                }
+
+                requiredModules.splice(0, 1);
+            }
+            while (requiredModules.length);
         });
+    }
+
+    getNodeModulePaths(modules, basePath)
+    {
+        const newModulePaths = [];
+
+        for (let i = 0; i < modules.length; i++)
+        {
+            const modulePath = basePath + modules[i].path + '.js';
+            newModulePaths.push(modulePath);
+        }
+
+        return newModulePaths;
     }
 
     readFile(path)
@@ -288,9 +325,9 @@ class Bundler
         return requiredModules;
     }
 
-    async bundleGlobal(importObj)
+    bundleGlobal(importObj)
     {
-        return new Promise((resolve)=>{
+        return new Promise(async (resolve)=>{
             resolve();
         });
     }
