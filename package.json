@@ -2,6 +2,8 @@
     "author": "Kyle Andrews",
     "license": "MIT",
     "dependencies": {
+        "animejs": "^3.1.0",
+        "pjax": "^0.2.8",
         "uuid": "^3.3.2"
     },
     "devDependencies": {

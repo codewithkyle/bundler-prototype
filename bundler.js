@@ -1,6 +1,7 @@
 const glob = require('glob');
 const rimraf = require('rimraf');
 const fs = require('fs');
+const path = require('path');
 const npmPackage = require('./package.json');
 
 class Bundler
@@ -233,21 +234,37 @@ class Bundler
     {
         return new Promise(async (resolve, reject)=>{
 
-            // let npmOrg = null;
-            // let subPaths = importObj.file.replace(/\@.*?\//, '').split('/');
-            // let npmPackage = subPaths[0];
+            let npmOrg = '';
+            let subPaths = importObj.file.replace(/\@.*?\//, '').split('/');
+            let npmName = subPaths[0];
 
-            // if (importObj.file.match(/\@/))
-            // {
-            //     npmOrg = importObj.file.match(/\@.*?\//)[0];
-            //     npmOrg = npmOrg.replace(/\//, '');
-            //     npmOrg = npmOrg.trim();
-            // }
+            if (importObj.file.match(/\@/))
+            {
+                npmOrg = importObj.file.match(/\@.*?\//)[0];
+                npmOrg = npmOrg.replace(/\//, '');
+                npmOrg = npmOrg.trim();
+            }
 
-            let requiredModules = [ `node_modules/${ importObj.file }.js` ];
+            let packageFilePath = '';
+            if (npmOrg)
+            {
+                packageFilePath += npmOrg + '/';
+            }
+            packageFilePath += npmName;
+            packageFilePath += '/package.json';
+
+            const npmPackage = require(packageFilePath);
+            
+            let initialFilePath = `node_modules/${ importObj.file }.js`;
+            if (npmPackage['browser'])
+            {
+                initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['browser'][Object.keys(npmPackage['browser'])[0]].match(/(?![\.\/]).*/)[0] }`;
+            }
+
+            let requiredModules = [ initialFilePath ];
 
             let loopCount = 0;
-            
+
             do
             {
                 loopCount++;
@@ -275,15 +292,17 @@ class Bundler
 
     getNodeModulePaths(modules, basePath)
     {
-        const newModulePaths = [];
+        return new Promise(async (resolve, reject)=>{
+            const newModulePaths = [];
 
-        for (let i = 0; i < modules.length; i++)
-        {
-            const modulePath = basePath + modules[i].path + '.js';
-            newModulePaths.push(modulePath);
-        }
+            for (let i = 0; i < modules.length; i++)
+            {
+                let modulePath = basePath + modules[i].path + '.js';
+                newModulePaths.push(modulePath);
+            }
 
-        return newModulePaths;
+            resolve(newModulePaths);
+        });
     }
 
     readFile(path)
