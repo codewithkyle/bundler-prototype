@@ -247,11 +247,11 @@ class Bundler
             const npmPackage = require(packageFilePath);
             let initialFilePath = '';
 
-            if (npmPackage['browser'])
-            {
-                initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['browser'][Object.keys(npmPackage['browser'])[0]].match(/(?![\.\/]).*/)[0] }`;
-            }
-            else if(npmPackage['main'])
+            // if (npmPackage['browser'])
+            // {
+            //     initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['browser'][Object.keys(npmPackage['browser'])[0]].match(/(?![\.\/]).*/)[0] }`;
+            // }
+            if (npmPackage['main'])
             {
                 initialFilePath = `node_modules${ (npmOrg) ? '/' + npmOrg : '' }/${ npmName }/${ npmPackage['main']}`;
             }
@@ -269,12 +269,17 @@ class Bundler
                 loopCount++;
                 console.log(loopCount, requiredModules);
                 const data = await this.readFile(requiredModules[0]);
-                const newModules = await this.getRequiredNodeModules(data);
-                const uniqueModules = await this.verifyUniqueNodeModules(parsedModules, newModules);
+                let newModules = await this.getRequiredNodeModules(data);
+                
+                if (npmPackage['browser'])
+                {
+                    newModules = await this.preferBrowserVersions(newModules, npmPackage);
+                }
+
+                // const uniqueModules = await this.verifyUniqueNodeModules(parsedModules, newModules);
 
                 if (newModules)
                 {
-
                     const currentPath = requiredModules[0].match(/.*(?=\/)/)[0];
                     const newModulePaths = await this.getNodeModulePaths(newModules, currentPath);
 
@@ -288,6 +293,23 @@ class Bundler
             }
             while (requiredModules.length);
         });
+    }
+
+    preferBrowserVersions(newModules, npmPackage)
+    {
+        for (const key of Object.keys(npmPackage['browser']))
+        {
+            for (let i = 0; i < newModules.length; i++)
+            {
+                if (key === newModules[i].file)
+                {
+                    newModules[i].file = npmPackage['browser'][key];
+                    break;
+                }
+            }
+        }
+
+        return newModules;
     }
 
     verifyUniqueNodeModules(parsedModules, newModules)
@@ -319,7 +341,7 @@ class Bundler
 
             for (let i = 0; i < modules.length; i++)
             {
-                let modulePath = basePath + modules[i].path + '.js';
+                let modulePath = basePath + modules[i].file.replace(/^[\.]/, '');
                 newModulePaths.push(modulePath);
             }
 
@@ -351,9 +373,9 @@ class Bundler
         {
             for (let i = 0; i < requiredFiles.length; i++)
             {
-                let filePath = requiredFiles[i].match(/[\'\"].*?[\'\"]/)[0].replace(/[\'\"\.]/g, '').trim();
-                let moduleVariable = requiredFiles[i].match(/(?=(var)|(let)|(const)).*?(?<=\=)/)[0].replace(/((var)|(let)|(const)|(\=)|(\s))/, '');
-                const newRequiredModule = { var: moduleVariable, path: filePath };
+                let filePath = requiredFiles[i].match(/[\'\"].*?[\'\"]/)[0].replace(/[\'\"]/g, '').trim();
+                let moduleVariable = requiredFiles[i].match(/(?=(var)|(let)|(const)).*?(?<=\=)/)[0].replace(/((var)|(let)|(const)|(\=)|(\s))/g, '');
+                const newRequiredModule = { var: moduleVariable, file: `${ filePath }.js` };
                 requiredModules.push(newRequiredModule);
             }
         }
