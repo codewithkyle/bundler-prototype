@@ -4,14 +4,15 @@ The purpose of this prototype is to experiment with the idea of building a custo
 
 ## Possible Solutions
 
-1. Use a custom [rollup](https://rollupjs.org/) script as the bundler
-2. Manually bundle files using nodes [file system api](https://nodejs.org/api/fs.html)
+1. Use a custom [rollup](https://rollupjs.org/) script as the bundler (checkout my [web components prototype](https://github.com/codewithkyle/web-components-prototype) for an example)
+2. Manually bundle files using nodejs & the FS api [file system api](https://nodejs.org/api/fs.html)
 
 ## Project Outline
 
-1. Parse JavaScript files for imports
-1. Remove duplicate imports
-1. Split bundles into local scripts and node modules
+1. Parse JavaScript files for imports ✅
+1. Remove duplicate imports ✅
+1. Split bundles into local scripts and node modules ✅
+1. Recursively parse node module dependencies
 1. Bundle node modules
 1. Bundle local scripts
 1. Create runtime application for loading required scripts
@@ -23,7 +24,7 @@ The purpose of this prototype is to experiment with the idea of building a custo
 - Runtime application
     - Imports dependencies
     - Limits file request when the same import is required for multiple files
-    - Delays script instantiation unitl all dependencies are loaded
+    - Delays script instantiation until all dependencies are loaded
 
 ## Script Lifecycle
 
@@ -47,3 +48,7 @@ The purpose of this prototype is to experiment with the idea of building a custo
 1. Custom loaded event is fired informing scripts of the UUID load status
 1. Scripts 1 hears the UUID load event and checks if all dependencies have been met
 1. Check passes, Script 1 is mounted, event listener removed
+
+# Postmortem
+
+TODO: Write postmortem documentation after prototype is finished
