@@ -49,6 +49,6 @@ The purpose of this prototype is to experiment with the idea of building a custo
 1. Scripts 1 hears the UUID load event and checks if all dependencies have been met
 1. Check passes, Script 1 is mounted, event listener removed
 
-# Postmortem
+## Postmortem
 
 TODO: Write postmortem documentation after prototype is finished
